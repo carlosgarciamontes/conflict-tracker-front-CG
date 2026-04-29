@@ -31,7 +31,7 @@ export const useConflictStore = defineStore('conflict', {
       if(!confirm('¿Seguro que quieres borrar este conflicto?')) return;
 
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/conflicts/%{id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/conflicts/${id}`, {
           method: 'DELETE'
         });
         

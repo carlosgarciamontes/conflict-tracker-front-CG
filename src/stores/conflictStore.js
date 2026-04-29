@@ -17,7 +17,7 @@ export const useConflictStore = defineStore('conflict', {
       this.error = null;
       
       try {
-        const response = await fetch('http://localhost:8080/api/v1/conflicts');
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/conflicts`);
         if (!response.ok) throw new Error('Error al conectar con la API');
         this.conflicts = await response.json();
       } catch (err) {
@@ -31,7 +31,7 @@ export const useConflictStore = defineStore('conflict', {
       if(!confirm('¿Seguro que quieres borrar este conflicto?')) return;
 
       try {
-        const response = await fetch(`http://localhost:8080/api/v1/conflicts/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/conflicts/%{id}`, {
           method: 'DELETE'
         });
         

@@ -3,80 +3,89 @@
     <h2 class="text-lg font-bold mb-4 text-gray-800">➕ Añadir Nuevo Conflicto</h2>
     
     <form @submit.prevent="submitForm" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700">Nombre del Conflicto</label>
-        <input v-model="formData.name" type="text" required 
-               class="mt-1 w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
-               placeholder="Ej: Crisis de octubre">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Nombre del Conflicto *</label>
+          <input v-model="formData.name" type="text" required 
+                 class="mt-1 w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                 placeholder="Ej: Crisis de octubre">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700">Fecha de Inicio *</label>
+          <input v-model="formData.startDate" type="date" required
+                 class="mt-1 w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500">
+        </div>
       </div>
 
       <div>
         <label class="block text-sm font-medium text-gray-700">Descripción</label>
-        <textarea v-model="formData.description" required rows="2"
-                  class="mt-1 w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Breve resumen del conflicto..."></textarea>
+        <textarea v-model="formData.description" rows="3"
+                  class="mt-1 w-full p-2 border border-gray-300 rounded focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Contexto y resumen del conflicto..."></textarea>
       </div>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Países Implicados (separados por coma)</label>
-          <input v-model="countriesInput" type="text" required
-                 class="mt-1 w-full p-2 border rounded focus:ring-blue-500 focus:border-blue-500"
-                 placeholder="Ej: España, Francia">
-        </div>
-        
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Estado</label>
-          <select v-model="formData.status" class="mt-1 w-full p-2 border rounded bg-white">
-            <option value="ACTIVE">Activo</option>
-            <option value="FROZEN">Congelado</option>
-            <option value="ENDED">Finalizado</option>
-          </select>
-        </div>
+      <div class="w-full md:w-1/2">
+        <label class="block text-sm font-medium text-gray-700">Estado *</label>
+        <select v-model="formData.status" class="mt-1 w-full p-2 border border-gray-300 rounded bg-white focus:ring-blue-500 focus:border-blue-500">
+          <option value="ACTIVE">Activo</option>
+          <option value="FROZEN">Congelado</option>
+          <option value="ENDED">Finalizado</option>
+        </select>
       </div>
 
-      <button type="submit" 
-              class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition"
-              :disabled="isSubmitting">
-        {{ isSubmitting ? 'Guardando...' : 'Guardar Conflicto' }}
-      </button>
+      <div class="flex gap-3 pt-4 border-t mt-6">
+        <button type="submit" 
+                class="flex-1 bg-blue-600 text-white font-bold py-2 px-4 rounded hover:bg-blue-700 transition"
+                :disabled="isSubmitting">
+          {{ isSubmitting ? 'Guardando en BD...' : 'Guardar Conflicto' }}
+        </button>
+        <button type="button" @click="$emit('success')"
+                class="bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded hover:bg-gray-300 transition">
+          Cancelar
+        </button>
+      </div>
     </form>
   </div>
 </template>
 
 <script setup>
 import { ref } from 'vue';
-import { useConflictStore } from '@/stores/conflictStore'; // Asegúrate de que esta ruta coincida con tu proyecto
+import { useConflictStore } from '@/stores/conflictStore';
 
+const emit = defineEmits(['success']);
 const store = useConflictStore();
-
 const isSubmitting = ref(false);
-const countriesInput = ref('');
+
+
 const formData = ref({
   name: '',
-  description: '',
+  startDate: new Date().toISOString().split('T')[0], 
   status: 'ACTIVE',
-  startDate: new Date().toISOString().split('T')[0], // Fecha de hoy por defecto
-  countryNames: []
+  description: '',
+  countries: [], 
+  factions: [],
+  events: []
 });
 
 const submitForm = async () => {
   isSubmitting.value = true;
   
-  // Convertimos el string de países en un array limpio
-  formData.value.countryNames = countriesInput.value.split(',').map(c => c.trim());
+  const payload = { ...formData.value };
   
-  const success = await store.addConflict(formData.value);
+  const success = await store.addConflict(payload);
   
   if (success) {
-    // Limpiamos el formulario si ha ido bien
+   
     formData.value.name = '';
     formData.value.description = '';
     formData.value.status = 'ACTIVE';
-    countriesInput.value = '';
-    alert('¡Conflicto guardado en Supabase con éxito!');
+    formData.value.startDate = new Date().toISOString().split('T')[0];
+    
+    alert('¡Conflicto guardado correctamente!');
+    emit('success'); // Avisa al componente padre (HomeView) para que oculte el formulario
   } else {
-    alert('Hubo un error al guardar.');
+    alert('Error al guardar. Revisa la consola o los logs de Render.');
   }
   
   isSubmitting.value = false;
